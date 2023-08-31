@@ -128,6 +128,14 @@ class FlashcardInteractiveCommand extends Command
 
     private function resetProgress()
     {
+        $confirmed = $this->confirm('Are you sure you want to reset all progress? This action cannot be undone.'); 
+        
+        if (!$confirmed) 
+        { 
+            $this->info('Reset canceled.'); 
+            return; 
+        }
+
         Flashcard::query()->update(["user_answer" => null]);
         $this->info("Practice progress has been reset for all flashcards.");
     }

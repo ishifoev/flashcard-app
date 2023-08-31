@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Flashcard;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Validator;
 
 class FlashcardInteractiveCommand extends Command
 {
@@ -56,6 +57,23 @@ class FlashcardInteractiveCommand extends Command
     {
         $question = $this->ask("Enter the flashcard question:");
         $answer = $this->ask("Enter the flashcard answer:");
+
+        $validator = Validator::make([
+            "question" => $question,
+            "answer" => $answer
+        ],
+        [
+            "question"=> "required|string|max:255",
+            "answer" =>"required|string|max:255",
+        ]
+        );
+        if($validator->fails()) {
+            $this->error("Validation failed:");
+            foreach($validator->errors()->all() as $error) {
+                $this->error($error);
+            }
+            return;
+        }
 
         Flashcard::create([
             "question" => $question,

@@ -97,7 +97,16 @@ class FlashcardInteractiveCommand extends Command
 
     private function displayStats()
     {
-        //Implement flashcard statistics logic
+        $totalFlashCards = Flashcard::count();
+        $answeredFlashcards = Flashcard::whereNotNull("user_answer")->count();
+        $correctlyAnsweredFlashcards = Flashcard::whereColumn("user_answer", "answer")->count();
+
+        $answerPercentage = ($answeredFlashcards / $totalFlashCards) * 100;
+        $correctPercentage = ($correctlyAnsweredFlashcards / $answeredFlashcards) * 100;
+
+        $this->info("Total flashcards: {$totalFlashCards}");
+        $this->info("Answered flashcards: {$answeredFlashcards} {$answerPercentage}$");
+        $this->info("Correctly answered flashcards: {$correctlyAnsweredFlashcards} {$answeredPercentage}")
     }
 
     private function resetProgress()

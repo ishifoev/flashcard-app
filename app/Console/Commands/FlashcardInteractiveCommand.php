@@ -92,7 +92,7 @@ class FlashcardInteractiveCommand extends Command
             //if(strtolow)
         }
 
-        $completionPercentage = ($totalFlashCards > 0) ? ($correctlyAnswered / $totalFlashCards) * 100 : 0;
+        $completionPercentage = ($totalFlashCards > 0) ? round(($correctlyAnswered / $totalFlashCards) * 100, 2) : 0;
          $this->info("Practice session complete. Completion: {$completionPercentage}%");
     }
 
@@ -100,12 +100,12 @@ class FlashcardInteractiveCommand extends Command
     {
         $totalFlashcards = Flashcard::count(); 
         $answeredFlashcards = Flashcard::whereNotNull('user_answer')->count(); 
-        $correctlyAnsweredFlashcards = Flashcard::where('user_answer', 'answer')->count(); 
-        $answeredPercentage = $totalFlashcards > 0 ? ($answeredFlashcards / $totalFlashcards) * 100 : 0; 
-        $correctPercentage = $answeredFlashcards > 0 ? ($correctlyAnsweredFlashcards / $answeredFlashcards) * 100 : 0; 
-        $this->info("Total flashcards: {$totalFlashcards}"); 
-        $this->info("Answered flashcards: {$answeredFlashcards} ({$answeredPercentage}%)");
-        $this->info("Correctly answered flashcards: {$correctlyAnsweredFlashcards} ({$correctPercentage}%)"); 
+        $correctlyAnsweredFlashcards = Flashcard::where('user_answer', Flashcard::raw('answer'))->count(); 
+        
+        $answeredPercentage = $totalFlashcards > 0 ? round(($answeredFlashcards / $totalFlashcards) * 100, 2) : 0; 
+        $correctPercentage = $answeredFlashcards > 0 ? round(($correctlyAnsweredFlashcards / $answeredFlashcards) * 100, 2) : 0; 
+        $this->info("Total flashcards: {$totalFlashcards}"); $this->info("Answered flashcards: {$answeredFlashcards} ({$answeredPercentage}%)"); 
+        $this->info("Correctly answered flashcards: {$correctlyAnsweredFlashcards} ({$correctPercentage}%)");
     }
 
     private function resetProgress()

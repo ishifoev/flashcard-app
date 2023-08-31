@@ -106,11 +106,12 @@ class FlashcardInteractiveCommand extends Command
 
         $this->info("Total flashcards: {$totalFlashCards}");
         $this->info("Answered flashcards: {$answeredFlashcards} {$answerPercentage}$");
-        $this->info("Correctly answered flashcards: {$correctlyAnsweredFlashcards} {$answeredPercentage}")
+        $this->info("Correctly answered flashcards: {$correctlyAnsweredFlashcards} {$correctPercentage}");
     }
 
     private function resetProgress()
     {
-        //Implement flashcard reset logic
+        Flashcard::query()->update(["user_answer" => null]);
+        $this->info("Practice progress has been reset for all flashcards.");
     }
 }

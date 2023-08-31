@@ -16,8 +16,6 @@ class FlashcardInteractiveCommand extends Command
     {
         $this->info("Welcome to Flashcard Interactive!");
 
-        
-
         while(true) {
             //Implement main menu and user interactions
             $action = $this->choice("Select an option:", ["Create", "List", "Practice","Stats", "Reset", "Exit"]);
@@ -76,7 +74,25 @@ class FlashcardInteractiveCommand extends Command
 
     private function practiceFlashcards() 
     {
-        //Implement flashcard practicing logic
+        $flashcards = Flashcard::all();
+        $totalFlashCards = count($flashcards);
+
+        $correctlyAnswered = 0;
+
+        foreach($flashcards as $flashcard) {
+            $userAnswer = $this->ask("Q: {$flashcard->question}");
+
+            if(strtolower($userAnswer) === strtolower($flashcard->answer)) {
+                $this->info("Correct!");
+                $correctlyAnswered++;
+            } else {
+                $this->error("Incorrect!");
+            }
+            //if(strtolow)
+        }
+
+        $completionPercentage = ($correctlyAnswered / $totalFlashCards) * 100;
+        $this->info("Practice session complete. Completion {$completionPercentage}%");
     }
 
     private function displayStats()

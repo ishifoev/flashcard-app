@@ -85,28 +85,27 @@ class FlashcardInteractiveCommand extends Command
             if(strtolower($userAnswer) === strtolower($flashcard->answer)) {
                 $this->info("Correct!");
                 $correctlyAnswered++;
+                $flashcard->update(["user_answer" => $userAnswer]);
             } else {
                 $this->error("Incorrect!");
             }
             //if(strtolow)
         }
 
-        $completionPercentage = ($correctlyAnswered / $totalFlashCards) * 100;
-        $this->info("Practice session complete. Completion {$completionPercentage}%");
+        $completionPercentage = ($totalFlashCards > 0) ? ($correctlyAnswered / $totalFlashCards) * 100 : 0;
+         $this->info("Practice session complete. Completion: {$completionPercentage}%");
     }
 
     private function displayStats()
     {
-        $totalFlashCards = Flashcard::count();
-        $answeredFlashcards = Flashcard::whereNotNull("user_answer")->count();
-        $correctlyAnsweredFlashcards = Flashcard::whereColumn("user_answer", "answer")->count();
-
-        $answerPercentage = ($answeredFlashcards / $totalFlashCards) * 100;
-        $correctPercentage = ($correctlyAnsweredFlashcards / $answeredFlashcards) * 100;
-
-        $this->info("Total flashcards: {$totalFlashCards}");
-        $this->info("Answered flashcards: {$answeredFlashcards} {$answerPercentage}$");
-        $this->info("Correctly answered flashcards: {$correctlyAnsweredFlashcards} {$correctPercentage}");
+        $totalFlashcards = Flashcard::count(); 
+        $answeredFlashcards = Flashcard::whereNotNull('user_answer')->count(); 
+        $correctlyAnsweredFlashcards = Flashcard::where('user_answer', 'answer')->count(); 
+        $answeredPercentage = $totalFlashcards > 0 ? ($answeredFlashcards / $totalFlashcards) * 100 : 0; 
+        $correctPercentage = $answeredFlashcards > 0 ? ($correctlyAnsweredFlashcards / $answeredFlashcards) * 100 : 0; 
+        $this->info("Total flashcards: {$totalFlashcards}"); 
+        $this->info("Answered flashcards: {$answeredFlashcards} ({$answeredPercentage}%)");
+        $this->info("Correctly answered flashcards: {$correctlyAnsweredFlashcards} ({$correctPercentage}%)"); 
     }
 
     private function resetProgress()

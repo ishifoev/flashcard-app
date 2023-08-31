@@ -98,7 +98,20 @@ class FlashcardInteractiveCommand extends Command
         $correctlyAnswered = 0;
 
         foreach($flashcards as $flashcard) {
+            if($flashcard->user_answer === "answer") {
+                $this->error("You have already answered this question correctly");
+                continue;
+            }
+            
             $userAnswer = $this->ask("Q: {$flashcard->question}");
+            //dd($userAnswer);
+            //exit;
+
+            //Validate user answer
+            if(empty(trim($userAnswer))) {
+                $this->error("Answer cannot be empty.");
+                continue;
+            }
 
             if(strtolower($userAnswer) === strtolower($flashcard->answer)) {
                 $this->info("Correct!");

@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Flashcard;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class FlashcardInteractiveCommand extends Command
 {
@@ -20,45 +21,52 @@ class FlashcardInteractiveCommand extends Command
         while(true) {
             //Implement main menu and user interactions
             $action = $this->choice("Select an option:", ["Create", "List", "Practice","Stats", "Reset", "Exit"]);
-
-            //Handle different actions
-            switch($action) {
-                case "Create":
-                    //Implement flashcard creation logic
-                    $this->createFlashCard();
-                    break;
-                case "List":
-                    //Implement flashcard listing logic
-                    $this->listFlashcards();
-                    break;
-                case "Practice":
-                    //Implement flashcard practice logic
-                    $this->practiceFlashcards();
-                    break;
-                case "Stats":
-                    //Implement flashcard stats logic
-                    $this->displayStats();
-                    break;
-                case "Reset":
-                    $this->resetProgress();
-                    //Implement flashcard reset logic
-                    break;
-                case "Exit":
-                    $this->info("Exiting Flashcard Interactive");
-                    return;
-                default:
-                $this->error("Invalid action selected");
+            if($action === "Exit") {
+                $this->info("Exiting Flashcard Interactive");
                 break;
             }
-        }
+            //Handle different actions
+            $method = 'handle' . Str::studly($action);
+            if(method_exists($this, $method)) {
+                $this->$method();
+            } else{
+               $this->line("Invalid action selected");
+            }
+          }
     }
 
-    private function createFlashCard()
+    private function handleCreate()
     {
-        $question = $this->ask("Enter the flashcard question:");
-        $answer = $this->ask("Enter the flashcard answer:");
+        $flashcardData = $this->getFlashcardData();
 
-        $validator = Validator::make([
+        if(!$flashcardData) {
+            return;
+        }
+
+        Flashcard::create($flashcardData);
+        
+        $this->info("Flashcard created successfully.");
+    }
+    
+    private function getFlashcardData()
+    {
+        $question = $this->ask("Enter the flashcard question");
+        $answer = $this->ask("Enter the flashcard answer");
+
+        $validator = $this->validateFlashcardData($question, $answer);
+
+        if($validator->fails()) {
+            $this->error("Validation failed:");
+            foreach($validator->errors()->all() as $error) {
+                $this->error($error);
+            }
+            return;
+        }
+    }
+    
+    private function validateFlashcardData($question, $answer)
+    {
+        return Validator::make([
             "question" => $question,
             "answer" => $answer
         ],
@@ -67,79 +75,81 @@ class FlashcardInteractiveCommand extends Command
             "answer" =>"required|string|max:255",
         ]
         );
-        if($validator->fails()) {
-            $this->error("Validation failed:");
-            foreach($validator->errors()->all() as $error) {
-                $this->error($error);
-            }
-            return;
-        }
+    }
 
-        Flashcard::create([
-            "question" => $question,
-            "answer" => $answer
-        ]);
+    private function handleList() 
+    {
+        $flashcards = $this->getFlashcards(); 
         
-        $this->info("Flashcard created successfully.");
+        $tableData = $flashcards->map(function ($flashcard) { 
+            return [ 
+                'ID' => $flashcard->id,
+                'Question' => $flashcard->question, 
+                'Answer' => $flashcard->answer, 
+                'Created At' => $flashcard->created_at->format('Y-m-d H:i:s'),
+                'Updated At' => $flashcard->updated_at->format('Y-m-d H:i:s'), ];
+             }); 
+        
+        $this->table(["ID", "Question", "Answer", "Created At", "Updated At"], $tableData);
     }
 
-    private function listFlashcards() 
+    private function handlePractice() 
     {
-        $flashcards = Flashcard::all();
-
-        $this->table(["ID", "Question", "Answer"], $flashcards);
-    }
-
-    private function practiceFlashcards() 
-    {
-        $flashcards = Flashcard::all();
+        $flashcards = $this->getFlashcards();
         $totalFlashCards = count($flashcards);
 
         $correctlyAnswered = 0;
 
         foreach($flashcards as $flashcard) {
-            if($flashcard->user_answer === "answer") {
-                $this->error("You have already answered this question correctly");
-                continue;
-            }
-            
-            $userAnswer = $this->ask("Q: {$flashcard->question}");
-            //dd($userAnswer);
-            //exit;
-
-            //Validate user answer
-            if(empty(trim($userAnswer))) {
-                $this->error("Answer cannot be empty.");
-                continue;
-            }
-
-            if(strtolower($userAnswer) === strtolower($flashcard->answer)) {
-                $this->info("Correct!");
-                $correctlyAnswered++;
-                $flashcard->update(["user_answer" => $userAnswer]);
-            } else {
-                $this->error("Incorrect!");
-            }
-            //if(strtolow)
+           $this->practiceSingleFlashcard($flashcard, $correctlyAnswered);
         }
 
         $completionPercentage = ($totalFlashCards > 0) ? round(($correctlyAnswered / $totalFlashCards) * 100, 2) : 0;
          $this->info("Practice session complete. Completion: {$completionPercentage}%");
     }
 
-    private function displayStats()
+    private function practiceSingleFlashcard($flashcard, &$correctlyAnswered) 
+    { 
+        if ($flashcard->user_answer === $flashcard->answer) { 
+            $this->error("You have already answered this question correctly"); 
+            return; 
+        } 
+        $userAnswer = $this->ask("Q: {$flashcard->question}"); 
+        
+        if (empty(trim($userAnswer))) 
+        { 
+            $this->error("Answer cannot be empty."); 
+            return; 
+        }
+        
+        if (strtolower($userAnswer) === strtolower($flashcard->answer)) { 
+            $this->info("Correct!"); $correctlyAnswered++; 
+            
+            $this->updateFlashcardUserAnswer($flashcard, $userAnswer); 
+        } else { 
+            $this->error("Incorrect!"); 
+        } 
+    } 
+    
+    private function updateFlashcardUserAnswer($flashcard, $userAnswer) { 
+        $flashcard->update(["user_answer" => $userAnswer]);
+     }
+
+    private function handleStats()
     {
-        $totalFlashcards = Flashcard::count(); 
-        $answeredFlashcards = Flashcard::whereNotNull('user_answer')->count(); 
-        $correctlyAnsweredFlashcards = Flashcard::where('user_answer', Flashcard::raw('answer'))->count(); 
+        $totalFlashcards = count($this->getFlashcards());
+        $answeredFlashcards = $this->getCompletedFlashcardsCount();
+        $correctlyAnsweredFlashcards = $this->getCorrectlyAnsweredFlashcardsCount();
         
         $answeredPercentage = $totalFlashcards > 0 ? round(($answeredFlashcards / $totalFlashcards) * 100, 2) : 0; 
         $correctPercentage = $answeredFlashcards > 0 ? round(($correctlyAnsweredFlashcards / $answeredFlashcards) * 100, 2) : 0; 
-        $this->info("Total flashcards: {$totalFlashcards}"); $this->info("Answered flashcards: {$answeredFlashcards} ({$answeredPercentage}%)"); 
+        
+        $this->info("Total flashcards: {$totalFlashcards}"); 
+        $this->info("Answered flashcards: {$answeredFlashcards} ({$answeredPercentage}%)"); 
         $this->info("Correctly answered flashcards: {$correctlyAnsweredFlashcards} ({$correctPercentage}%)");
     }
 
-    private function resetProgress()
+    private function handleReset()
     {
         $confirmed = $this->confirm('Are you sure you want to reset all progress? This action cannot be undone.'); 
         
@@ -151,5 +161,20 @@ class FlashcardInteractiveCommand extends Command
 
         Flashcard::query()->update(["user_answer" => null]);
         $this->info("Practice progress has been reset for all flashcards.");
+    }
+
+    private function getFlashcards() 
+    { 
+        return Flashcard::all(); 
+    } 
+    
+    private function getCompletedFlashcardsCount() 
+    { 
+        return Flashcard::whereNotNull('user_answer')->count(); 
+    } 
+    
+    private function getCorrectlyAnsweredFlashcardsCount() 
+    {
+         return Flashcard::where('user_answer', Flashcard::raw('answer'))->count(); 
     }
 }

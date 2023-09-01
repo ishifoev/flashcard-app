@@ -45,4 +45,24 @@ class FlashcardInteractiveCommandTest extends TestCase
           // Assert that no flashcard was created
           $this->assertCount(0, Flashcard::all());
       }
+
+    /** @test */
+    public function it_can_reset_progress()
+    {
+        // Create a few flashcards with user answers in the database
+        Flashcard::factory()->count(3)->create(['user_answer' => 'Some answer']);
+    
+        // Simulate user input and command execution
+        $this->artisan('flashcard:interactive')
+            ->expectsQuestion('Select an option:', 'Reset')
+            ->expectsQuestion('Are you sure you want to reset all progress? This action cannot be undone.', 'yes')
+            ->expectsOutput('Practice progress has been reset for all flashcards.')
+            ->expectsQuestion('Select an option:', 'Exit') // To exit the loop
+            ->assertExitCode(0);
+    
+        // Assert that user answers have been reset for all flashcards
+        $this->assertEquals(0, Flashcard::whereNotNull('user_answer')->count());
+    }
+
+      
 }

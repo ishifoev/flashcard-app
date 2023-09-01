@@ -10,4 +10,6 @@ class Flashcard extends Model
     use HasFactory;
 
     protected $fillable = ["question", "answer", "user_answer"];
+
+    protected $casts = ["created_at" => "datetime", "updated_at" => "datetime"];
 }

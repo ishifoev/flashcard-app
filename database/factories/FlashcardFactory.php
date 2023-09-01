@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use App\Models\Flashcard;
+use Carbon\Carbon;
 
 class FlashcardFactory extends Factory
 {
@@ -18,6 +19,8 @@ class FlashcardFactory extends Factory
         return [
             "question" => $this->faker->sentence(),
             "answer" => $this->faker->sentence(),
+            "created_at" => Carbon::now(),
+            "updated_at" => Carbon::now()
         ];
     }
 }

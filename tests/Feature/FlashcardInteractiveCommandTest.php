@@ -5,7 +5,8 @@ namespace Tests\Feature;
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Models\Flashcard;
- 
+use Illuminate\Contracts\Console\Kernel;
+
 class FlashcardInteractiveCommandTest extends TestCase
 {
     use RefreshDatabase;
@@ -31,8 +32,8 @@ class FlashcardInteractiveCommandTest extends TestCase
     }
 
       /** @test */
-      public function it_cannot_create_a_flashcard_with_invalid_data()
-      {
+    public function it_cannot_create_a_flashcard_with_invalid_data()
+    {
           // Simulate user input with invalid data
         $this->artisan('flashcard:interactive')
               ->expectsQuestion('Select an option:', 'Create')
@@ -44,7 +45,7 @@ class FlashcardInteractiveCommandTest extends TestCase
    
           // Assert that no flashcard was created
           $this->assertCount(0, Flashcard::all());
-      }
+    }
 
     /** @test */
     public function it_can_reset_progress()
@@ -64,5 +65,45 @@ class FlashcardInteractiveCommandTest extends TestCase
         $this->assertEquals(0, Flashcard::whereNotNull('user_answer')->count());
     }
 
-      
+      /** @test */
+      public function it_can_handle_practice_session_with_correct_answers()
+      {
+          // Create three flashcards in the database with different questions and answers
+          $flashcards = Flashcard::factory()->count(3)->create();
+   
+          // Simulate user input to practice flashcards with correct answers
+          $this->artisan('flashcard:interactive')
+              ->expectsQuestion('Select an option:', 'Practice')
+              ->expectsQuestion('Q: ' . $flashcards[0]->question, $flashcards[0]->answer)
+              ->expectsQuestion('Q: ' . $flashcards[1]->question, $flashcards[1]->answer)
+              ->expectsQuestion('Q: ' . $flashcards[2]->question, $flashcards[2]->answer)
+              ->expectsQuestion('Select an option:', 'Exit') // To exit the loop
+              ->assertExitCode(0);
+   
+          // Assert that practice session completion is 100% since all answers are correct
+          $this->assertDatabaseHas('flashcards', ['user_answer' => $flashcards[0]->answer]);
+          $this->assertDatabaseHas('flashcards', ['user_answer' => $flashcards[1]->answer]);
+          $this->assertDatabaseHas('flashcards', ['user_answer' => $flashcards[2]->answer]);
+      }
+   
+      /** @test */
+      public function it_can_handle_practice_session_with_incorrect_answers()
+      {
+          // Create three flashcards in the database with different questions and answers
+          $flashcards = Flashcard::factory()->count(3)->create();
+   
+          // Simulate user input to practice flashcards with incorrect answers
+          $this->artisan('flashcard:interactive')
+              ->expectsQuestion('Select an option:', 'Practice')
+              ->expectsQuestion('Q: ' . $flashcards[0]->question, 'incorrect1')
+              ->expectsQuestion('Q: ' . $flashcards[1]->question, $flashcards[1]->answer)
+              ->expectsQuestion('Q: ' . $flashcards[2]->question, 'incorrect2')
+              ->expectsQuestion('Select an option:', 'Exit') // To exit the loop
+              ->assertExitCode(0);
+   
+          // Assert that practice session completion is less than 100%
+          $this->assertDatabaseMissing('flashcards', ['user_answer' => $flashcards[0]->answer]);
+          $this->assertDatabaseHas('flashcards', ['user_answer' => $flashcards[1]->answer]);
+          $this->assertDatabaseMissing('flashcards', ['user_answer' => $flashcards[2]->answer]);
+      }
 }

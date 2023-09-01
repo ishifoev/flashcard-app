@@ -38,7 +38,7 @@ class FlashcardInteractiveCommand extends Command
     private function handleCreate()
     {
         $flashcardData = $this->getFlashcardData();
-
+    
         if(!$flashcardData) {
             return;
         }
@@ -62,6 +62,11 @@ class FlashcardInteractiveCommand extends Command
             }
             return;
         }
+
+        return [
+            'question' => $question,
+            'answer' => $answer
+        ];
     }
     
     private function validateFlashcardData($question, $answer)

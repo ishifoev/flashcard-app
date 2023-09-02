@@ -237,4 +237,18 @@ class FlashcardInteractiveCommandTest extends TestCase
             ->expectsOutput('Exiting Flashcard Interactive')
             ->assertExitCode(0);
     }
+
+    /** @test */
+    public function it_handles_unexpected_input_during_practice()
+    {
+        // Create a flashcard in the database
+        $flashcard = Flashcard::factory()->create();
+    
+        $this->artisan('flashcard:interactive')
+            ->expectsQuestion('Select an option:', 'Practice')
+            ->expectsQuestion('Q: ' . $flashcard->question, 'UnexpectedInput')
+            ->expectsOutput('Incorrect!')
+            ->expectsQuestion('Select an option:', 'Exit')
+            ->assertExitCode(0);
+    }
 }

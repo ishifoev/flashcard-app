@@ -64,6 +64,12 @@ To start the Flashcard CLI application, run the following command
 
 This application uses MySQL database, which managed by Laravel Sail. You can find database migrations in the `database/migrations` directory.
 
+## Testing
+
+To run the application tests, use the following command 
+
+    ./vendor/bin/sail artisan test
+
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).

@@ -56,6 +56,12 @@ To start the Flashcard CLI application, run the following command
 
 6. **Exit:** Exit the application.
 
+## Requirements 
+
+- PHP 7.4 or higher 
+- [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/): Used for managing the development environment
+- Laravel Sail(included on this project, before install you need to know that you have a docker and docker compose)
+
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).

@@ -5,7 +5,7 @@ namespace Tests\Feature;
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Models\Flashcard;
-use Illuminate\Contracts\Console\Kernel;
+use Illuminate\Support\Facades\DB;
 
 class FlashcardInteractiveCommandTest extends TestCase
 {
@@ -29,6 +29,26 @@ class FlashcardInteractiveCommandTest extends TestCase
             'question' => 'What is 2 + 2?',
             'answer' => '4',
         ]);
+    }
+
+    public function it_handles_database_error_during_flashcard_creation()
+    {
+        // Mock a database error during flashcard creation
+        DB::shouldReceive('table')->once()->andReturnUsing(function () {
+            throw new \Exception('Database error');
+        });
+ 
+        // Simulate user input and command execution
+        $this->artisan('flashcard:interactive')
+            ->expectsQuestion('Select an option:', 'Create')
+            ->expectsQuestion('Enter the flashcard question', 'What is 2 + 2?')
+            ->expectsQuestion('Enter the flashcard answer', '4')
+            ->expectsOutput('Failed to create the flashcard due to a database error.')
+            ->expectsQuestion('Select an option:', 'Exit') // To exit the loop
+            ->assertExitCode(0);
+ 
+        // Ensure that no flashcard was created
+        $this->assertCount(0, Flashcard::all());
     }
 
       /** @test */

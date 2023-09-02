@@ -40,7 +40,7 @@ An interactive CLI program for practicing flashcards.
 
 To start the Flashcard CLI application, run the following command
 
-    ```./vendor/bin/sail artisan flashcard:interactive```
+    ./vendor/bin/sail artisan flashcard:interactive
 
 ## Menu Options
 

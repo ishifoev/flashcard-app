@@ -5,7 +5,7 @@ namespace Tests\Feature;
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Models\Flashcard;
-use Illuminate\Contracts\Console\Kernel;
+use Illuminate\Support\Facades\DB;
 
 class FlashcardInteractiveCommandTest extends TestCase
 {
@@ -29,6 +29,26 @@ class FlashcardInteractiveCommandTest extends TestCase
             'question' => 'What is 2 + 2?',
             'answer' => '4',
         ]);
+    }
+
+    public function it_handles_database_error_during_flashcard_creation()
+    {
+        // Mock a database error during flashcard creation
+        DB::shouldReceive('table')->once()->andReturnUsing(function () {
+            throw new \Exception('Database error');
+        });
+ 
+        // Simulate user input and command execution
+        $this->artisan('flashcard:interactive')
+            ->expectsQuestion('Select an option:', 'Create')
+            ->expectsQuestion('Enter the flashcard question', 'What is 2 + 2?')
+            ->expectsQuestion('Enter the flashcard answer', '4')
+            ->expectsOutput('Failed to create the flashcard due to a database error.')
+            ->expectsQuestion('Select an option:', 'Exit') // To exit the loop
+            ->assertExitCode(0);
+ 
+        // Ensure that no flashcard was created
+        $this->assertCount(0, Flashcard::all());
     }
 
       /** @test */
@@ -87,26 +107,64 @@ class FlashcardInteractiveCommandTest extends TestCase
       }
    
       /** @test */
-      public function it_can_handle_practice_session_with_incorrect_answers()
-      {
+    public function it_can_handle_practice_session_with_incorrect_answers()
+    {
           // Create three flashcards in the database with different questions and answers
-          $flashcards = Flashcard::factory()->count(3)->create();
+        $flashcards = Flashcard::factory()->count(3)->create();
    
           // Simulate user input to practice flashcards with incorrect answers
-          $this->artisan('flashcard:interactive')
-              ->expectsQuestion('Select an option:', 'Practice')
-              ->expectsQuestion('Q: ' . $flashcards[0]->question, 'incorrect1')
-              ->expectsQuestion('Q: ' . $flashcards[1]->question, $flashcards[1]->answer)
-              ->expectsQuestion('Q: ' . $flashcards[2]->question, 'incorrect2')
-              ->expectsQuestion('Select an option:', 'Exit') // To exit the loop
-              ->assertExitCode(0);
+        $this->artisan('flashcard:interactive')
+            ->expectsQuestion('Select an option:', 'Practice')
+            ->expectsQuestion('Q: ' . $flashcards[0]->question, 'incorrect1')
+            ->expectsQuestion('Q: ' . $flashcards[1]->question, $flashcards[1]->answer)
+            ->expectsQuestion('Q: ' . $flashcards[2]->question, 'incorrect2')
+            ->expectsQuestion('Select an option:', 'Exit') // To exit the loop
+            ->assertExitCode(0);
    
           // Assert that practice session completion is less than 100%
-          $this->assertDatabaseMissing('flashcards', ['user_answer' => $flashcards[0]->answer]);
-          $this->assertDatabaseHas('flashcards', ['user_answer' => $flashcards[1]->answer]);
-          $this->assertDatabaseMissing('flashcards', ['user_answer' => $flashcards[2]->answer]);
-      }
+        $this->assertDatabaseMissing('flashcards', ['user_answer' => $flashcards[0]->answer]);
+        $this->assertDatabaseHas('flashcards', ['user_answer' => $flashcards[1]->answer]);
+        $this->assertDatabaseMissing('flashcards', ['user_answer' => $flashcards[2]->answer]);
+  }
 
+  /** @test */
+  public function it_displays_error_message_for_empty_question_and_answer()
+  {
+      // Simulate user input with empty question and answer
+      $this->artisan('flashcard:interactive')
+          ->expectsQuestion('Select an option:', 'Create')
+          ->expectsQuestion('Enter the flashcard question', '') // Empty question
+          ->expectsQuestion('Enter the flashcard answer', '')   // Empty answer
+          ->expectsOutput('Validation failed:')
+          ->expectsOutput('The question field is required.')
+          ->expectsOutput('The answer field is required.')
+          ->expectsQuestion('Select an option:', 'Exit') // To exit the loop
+          ->assertExitCode(0);
+
+      // Assert that no flashcard was created
+      $this->assertCount(0, Flashcard::all());
+  }
+
+  /** @test */
+  public function it_displays_error_message_for_empty_user_answer_during_practice()
+  {
+      // Create a flashcard in the database
+      $flashcard = Flashcard::factory()->create();
+
+      // Simulate user input with an empty user answer during practice
+      $this->artisan('flashcard:interactive')
+          ->expectsQuestion('Select an option:', 'Practice')
+          ->expectsQuestion('Q: ' . $flashcard->question, '') // Empty user answer
+          ->expectsOutput('Answer cannot be empty.')
+          ->expectsQuestion('Select an option:', 'Exit') // To exit the loop
+          ->assertExitCode(0);
+
+      // Assert that the flashcard's user answer was not updated
+      $this->assertDatabaseHas('flashcards', [
+          'id' => $flashcard->id,
+          'user_answer' => null,
+      ]);
+  }
      /** @test */
     public function it_can_list_flashcards()
     {
@@ -158,4 +216,108 @@ class FlashcardInteractiveCommandTest extends TestCase
              ->expectsQuestion('Select an option:', 'Exit') // To exit the loop
              ->assertExitCode(0);
      }
+
+    /** @test */
+    public function it_handles_invalid_menu_choice()
+    {
+        $this->artisan('flashcard:interactive')
+            ->expectsOutput('Welcome to Flashcard Interactive!')
+            ->expectsQuestion('Select an option:', 'InvalidChoice')
+            ->expectsOutput('Invalid action selected')
+            ->expectsQuestion('Select an option:', 'Exit')
+            ->assertExitCode(0);
+    }
+
+    /** @test */
+    public function it_can_exit_the_program()
+    {
+        $this->artisan('flashcard:interactive')
+            ->expectsOutput('Welcome to Flashcard Interactive!')
+            ->expectsQuestion('Select an option:', 'Exit')
+            ->expectsOutput('Exiting Flashcard Interactive')
+            ->assertExitCode(0);
+    }
+
+    /** @test */
+    public function it_handles_unexpected_input_during_practice()
+    {
+        // Create a flashcard in the database
+        $flashcard = Flashcard::factory()->create();
+    
+        $this->artisan('flashcard:interactive')
+            ->expectsQuestion('Select an option:', 'Practice')
+            ->expectsQuestion('Q: ' . $flashcard->question, 'UnexpectedInput')
+            ->expectsOutput('Incorrect!')
+            ->expectsQuestion('Select an option:', 'Exit')
+            ->assertExitCode(0);
+    }
+
+    /** @test */
+    public function it_can_reset_progress_with_confirmation()
+    {
+        // Create a few flashcards with user answers in the database
+        Flashcard::factory()->count(3)->create(['user_answer' => 'Some answer']);
+    
+        $this->artisan('flashcard:interactive')
+            ->expectsQuestion('Select an option:', 'Reset')
+            ->expectsQuestion('Are you sure you want to reset all progress? This action cannot be undone.', 'yes')
+            ->expectsOutput('Practice progress has been reset for all flashcards.')
+            ->expectsQuestion('Select an option:', 'Exit') // To exit the loop
+            ->assertExitCode(0);
+    
+        // Assert that user answers have been reset for all flashcards
+        $this->assertEquals(0, Flashcard::whereNotNull('user_answer')->count());
+    }
+
+    /** @test */
+    public function it_handles_practice_without_flashcards()
+    {
+        // Ensure no flashcards exist in the database
+        Flashcard::query()->delete();
+    
+        // Simulate user input to practice flashcards
+        $this->artisan('flashcard:interactive')
+            ->expectsQuestion('Select an option:', 'Practice')
+            ->expectsOutput('No flashcards available for practice.')
+            ->expectsQuestion('Select an option:', 'Exit')
+            ->assertExitCode(0);
+    }
+
+    /** @test */
+    public function it_handles_displaying_stats_without_flashcards()
+    {
+        // Ensure no flashcards exist in the database
+        Flashcard::query()->delete();
+    
+        // Simulate user input to display stats
+        $this->artisan('flashcard:interactive')
+            ->expectsQuestion('Select an option:', 'Stats')
+            ->expectsOutput('Total flashcards: 0')
+            ->expectsOutput('Answered flashcards: 0 (0%)')
+            ->expectsOutput('Correctly answered flashcards: 0 (0%)')
+            ->expectsQuestion('Select an option:', 'Exit')
+            ->assertExitCode(0);
+    }
+
+    /** @test */
+    public function it_can_display_stats_with_accuracy()
+    {
+        // Create a specific scenario
+        $totalFlashcards = 10;
+        $answeredFlashcards = 7;
+    
+        // Create the flashcards
+        Flashcard::factory()->count($totalFlashcards)->create();
+    
+        // Set user answers for some of the flashcards
+        Flashcard::inRandomOrder()->limit($answeredFlashcards)->update(['user_answer' => 'Some answer']);
+    
+        // Simulate user input and command execution
+        $this->artisan('flashcard:interactive')
+            ->expectsQuestion('Select an option:', 'Stats')
+            ->expectsOutput("Total flashcards: $totalFlashcards")
+            ->expectsOutput("Answered flashcards: $answeredFlashcards (70%)") // Expected percentage: 70%
+            ->expectsQuestion('Select an option:', 'Exit') // To exit the loop
+            ->assertExitCode(0);
+    }
 }

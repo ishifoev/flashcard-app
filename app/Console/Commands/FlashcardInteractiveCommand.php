@@ -106,6 +106,11 @@ class FlashcardInteractiveCommand extends Command
         $flashcards = $this->getFlashcards();
         $totalFlashCards = count($flashcards);
 
+        if($totalFlashCards === 0) {
+           $this->info("No flashcards available for practice.");
+           return;
+        }
+
         $correctlyAnswered = 0;
 
         foreach($flashcards as $flashcard) {

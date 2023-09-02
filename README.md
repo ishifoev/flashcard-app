@@ -16,10 +16,26 @@ An interactive CLI program for practicing flashcards.
 
 3. Copy `.env.example` file and configure your database connection
 
-```cp .env.example .env```
+    ```bash 
+    cp .env.example .env
 
 Update the `.env` file with your database credentials. 
 
+4. Start the Laravel Sail enviroment
+
+    ```bash
+    ./vendor/bin/sail up -d
+
+5. Generate an application key
+
+    ```bash
+    ./vendor/bin/sail artisan key:generate
+
+6. Run the database migrations
+   
+   ```bash
+   ./vendor/bin/sail artisan migrate
+   
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).

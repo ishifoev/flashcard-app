@@ -19,7 +19,7 @@ An interactive CLI program for practicing flashcards.
     ```bash 
     cp .env.example .env
 
-Update the `.env` file with your database credentials. 
+    Update the `.env` file with your database credentials. 
 
 4. Start the Laravel Sail enviroment
 
@@ -35,7 +35,17 @@ Update the `.env` file with your database credentials.
    
    ```bash
    ./vendor/bin/sail artisan migrate
-   
+
+## Usage
+
+To start the Flashcard CLI application, run the following command
+
+    ```bash
+    ./vendor/bin/sail artisan flashcard:interactive
+    ```
+
+## Menu 
+
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).

@@ -43,9 +43,12 @@ class FlashcardInteractiveCommand extends Command
             return;
         }
 
-        Flashcard::create($flashcardData);
-        
-        $this->info("Flashcard created successfully.");
+        try {
+            Flashcard::create($flashcardData);
+            $this->info("Flashcard created successfully.");
+        } catch(\Exception $e) {
+            $this->error("Failed to create the flashcard due to a database error");
+        }
     }
     
     private function getFlashcardData()
@@ -76,8 +79,8 @@ class FlashcardInteractiveCommand extends Command
             "answer" => $answer
         ],
         [
-            "question"=> "required|string|max:255",
-            "answer" =>"required|string|max:255",
+            "question" => ["required", "string", "max:255", "min:3"], // Example: Minimum length of 5 characters 
+            "answer" => ["required", "string", "max:255", "min:1"], // Example: Minimum length of 2 characters
         ]
         );
     }

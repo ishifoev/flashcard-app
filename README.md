@@ -11,11 +11,11 @@ An interactive CLI program for practicing flashcards.
 
 2. Navigate to the project directory:
  
- `cd flashcard-app`
+```cd flashcard-app```
 
 3. Copy `.env.example` file and configure your database connection
 
-`cp .env.example .env`
+```cp .env.example .env```
 
 Update the `.env` file with your database credentials. 
 

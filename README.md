@@ -70,6 +70,18 @@ To run the application tests, use the following command
 
     ./vendor/bin/sail artisan test
 
+## Error handling
+
+The application handles errors and provide clear error messages for various scenarios.
+
+## Contributing
+
+Feel free to open issue or submit a pull request.
+
+## Author
+
+- [Ismoil Shifoev](https://www.linkedin.com/in/ismoil-shifoev-9405b6180/) Feel free write me in Linkedin
+
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).

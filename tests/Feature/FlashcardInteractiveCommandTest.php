@@ -227,5 +227,14 @@ class FlashcardInteractiveCommandTest extends TestCase
             ->expectsQuestion('Select an option:', 'Exit')
             ->assertExitCode(0);
     }
- 
+
+    /** @test */
+    public function it_can_exit_the_program()
+    {
+        $this->artisan('flashcard:interactive')
+            ->expectsOutput('Welcome to Flashcard Interactive!')
+            ->expectsQuestion('Select an option:', 'Exit')
+            ->expectsOutput('Exiting Flashcard Interactive')
+            ->assertExitCode(0);
+    }
 }

@@ -40,11 +40,23 @@ An interactive CLI program for practicing flashcards.
 
 To start the Flashcard CLI application, run the following command
 
-    ```bash
+    ```
     ./vendor/bin/sail artisan flashcard:interactive
     ```
 
-## Menu 
+## Menu Options
+
+1. **Create a flashcard:** Add a new flashcard with question and asnwer.
+
+2. **List all flashcards:** View a list of all created flashcards.
+
+3. **Practice:** Practice flashcards and track your progress.
+
+4. **Stats:** Display statistics about your flashcard.
+
+5. **Reset:** Reset your prorgress and start fresh.
+
+6. **Exit:** Exit the application.
 
 ## License
 

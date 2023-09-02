@@ -216,4 +216,16 @@ class FlashcardInteractiveCommandTest extends TestCase
              ->expectsQuestion('Select an option:', 'Exit') // To exit the loop
              ->assertExitCode(0);
      }
+
+    /** @test */
+    public function it_handles_invalid_menu_choice()
+    {
+        $this->artisan('flashcard:interactive')
+            ->expectsOutput('Welcome to Flashcard Interactive!')
+            ->expectsQuestion('Select an option:', 'InvalidChoice')
+            ->expectsOutput('Invalid action selected')
+            ->expectsQuestion('Select an option:', 'Exit')
+            ->assertExitCode(0);
+    }
+ 
 }

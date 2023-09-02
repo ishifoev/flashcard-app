@@ -251,4 +251,51 @@ class FlashcardInteractiveCommandTest extends TestCase
             ->expectsQuestion('Select an option:', 'Exit')
             ->assertExitCode(0);
     }
+
+    /** @test */
+    public function it_can_reset_progress_with_confirmation()
+    {
+        // Create a few flashcards with user answers in the database
+        Flashcard::factory()->count(3)->create(['user_answer' => 'Some answer']);
+    
+        $this->artisan('flashcard:interactive')
+            ->expectsQuestion('Select an option:', 'Reset')
+            ->expectsQuestion('Are you sure you want to reset all progress? This action cannot be undone.', 'yes')
+            ->expectsOutput('Practice progress has been reset for all flashcards.')
+            ->expectsQuestion('Select an option:', 'Exit') // To exit the loop
+            ->assertExitCode(0);
+    
+        // Assert that user answers have been reset for all flashcards
+        $this->assertEquals(0, Flashcard::whereNotNull('user_answer')->count());
+    }
+
+    /** @test */
+    public function it_handles_practice_without_flashcards()
+    {
+        // Ensure no flashcards exist in the database
+        Flashcard::query()->delete();
+    
+        // Simulate user input to practice flashcards
+        $this->artisan('flashcard:interactive')
+            ->expectsQuestion('Select an option:', 'Practice')
+            ->expectsOutput('No flashcards available for practice.')
+            ->expectsQuestion('Select an option:', 'Exit')
+            ->assertExitCode(0);
+    }
+
+    /** @test */
+    public function it_handles_displaying_stats_without_flashcards()
+    {
+        // Ensure no flashcards exist in the database
+        Flashcard::query()->delete();
+    
+        // Simulate user input to display stats
+        $this->artisan('flashcard:interactive')
+            ->expectsQuestion('Select an option:', 'Stats')
+            ->expectsOutput('Total flashcards: 0')
+            ->expectsOutput('Answered flashcards: 0 (0%)')
+            ->expectsOutput('Correctly answered flashcards: 0 (0%)')
+            ->expectsQuestion('Select an option:', 'Exit')
+            ->assertExitCode(0);
+    }
 }

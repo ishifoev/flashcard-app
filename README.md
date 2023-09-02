@@ -60,6 +60,10 @@ To start the Flashcard CLI application, run the following command
 - [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/): Used for managing the development environment
 - Laravel Sail(included on this project, before install you need to know that you have a docker and docker compose)
 
+## Database 
+
+This application uses MySQL database, which managed by Laravel Sail. You can find database migrations in the `database/migrations` directory.
+
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).

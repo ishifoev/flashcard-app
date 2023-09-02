@@ -11,7 +11,8 @@ An interactive CLI program for practicing flashcards.
 
 2. Navigate to the project directory:
  
-```cd flashcard-app```
+   ```bash
+   cd flashcard-app
 
 3. Copy `.env.example` file and configure your database connection
 

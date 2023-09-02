@@ -14,12 +14,10 @@ An interactive CLI program for practicing flashcards.
    ```bash
    cd flashcard-app
 
-3. Copy `.env.example` file and configure your database connection
+3. Copy `.env.example` file and configure your database connection. Update the `.env` file with your database credentials. 
 
     ```bash 
     cp .env.example .env
-
-    Update the `.env` file with your database credentials. 
 
 4. Start the Laravel Sail enviroment
 

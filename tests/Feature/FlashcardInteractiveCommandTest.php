@@ -130,4 +130,32 @@ class FlashcardInteractiveCommandTest extends TestCase
             ->assertExitCode(0);
             ;
     }
+
+     /** @test */
+     public function it_can_display_stats()
+     {
+         // Create a few flashcards in the database
+         $totalFlashcards = 10;
+         Flashcard::factory()->count($totalFlashcards)->create();
+  
+         // Set user answers for some of the flashcards
+         $answeredFlashcards = 7;
+         Flashcard::inRandomOrder()->limit($answeredFlashcards)->update(['user_answer' => 'Some answer']);
+  
+         // Calculate expected percentages
+         $answeredPercentage = ($answeredFlashcards / $totalFlashcards) * 100;
+  
+         // Count correctly answered flashcards
+         $correctlyAnsweredFlashcards = Flashcard::where('user_answer', Flashcard::raw('answer'))->count();
+         $correctPercentage = ($correctlyAnsweredFlashcards / $answeredFlashcards) * 100;
+  
+         // Simulate user input and command execution
+         $this->artisan('flashcard:interactive')
+             ->expectsQuestion('Select an option:', 'Stats')
+             ->expectsOutput("Total flashcards: $totalFlashcards")
+             ->expectsOutput("Answered flashcards: $answeredFlashcards ($answeredPercentage%)")
+             ->expectsOutput("Correctly answered flashcards: $correctlyAnsweredFlashcards ($correctPercentage%)")
+             ->expectsQuestion('Select an option:', 'Exit') // To exit the loop
+             ->assertExitCode(0);
+     }
 }

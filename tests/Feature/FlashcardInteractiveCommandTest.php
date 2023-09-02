@@ -106,4 +106,28 @@ class FlashcardInteractiveCommandTest extends TestCase
           $this->assertDatabaseHas('flashcards', ['user_answer' => $flashcards[1]->answer]);
           $this->assertDatabaseMissing('flashcards', ['user_answer' => $flashcards[2]->answer]);
       }
+
+     /** @test */
+    public function it_can_list_flashcards()
+    {
+        // Create a few flashcards in the database
+        Flashcard::factory()->count(1)->create();
+        $flashcards = Flashcard::all();
+
+        $this->artisan('flashcard:interactive')
+            ->expectsQuestion('Select an option:', 'List')
+            ->expectsTable([
+                'ID',
+                'Question',
+                "Answer",
+                "Created At",
+                "Updated At"
+            ], [
+                [$flashcards[0]->id, $flashcards[0]->question, $flashcards[0]->answer, $flashcards[0]->created_at->format('Y-m-d H:i:s'),
+                 $flashcards[0]->updated_at->format('Y-m-d H:i:s')],
+            ])
+            ->expectsQuestion('Select an option:', 'Exit')
+            ->assertExitCode(0);
+            ;
+    }
 }
